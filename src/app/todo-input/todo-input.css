@@ -1,0 +1,44 @@
+.todo-input {
+  width: 100%;
+  max-width: 450px;
+  padding: 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: inherit;
+  color: #000;
+}
+
+.todo-input:focus {
+  outline: none;
+  border-color: #fff;
+}
+
+.todo-input-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.todo-add-button {
+  margin-left: 10px;
+  padding: 12px 20px;
+  font-size: 16px;
+  background-color: #007bff2c;
+  color: #fff;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.todo-add-button:hover {
+  background-color: #0057b32e;
+}
+form select {
+  padding: 12px 20px;
+  margin-left: 5px;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
