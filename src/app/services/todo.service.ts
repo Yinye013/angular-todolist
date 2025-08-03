@@ -71,43 +71,51 @@ export class TodoService {
   }
 
   updateTodo(id: string, updates: Partial<Todo>) {
+    //ok. Noticed a trend. Do the optimistic update first, then make the API call.
+    const currentTodos = this.todosSubject.value;
+    const todoIndex = currentTodos.findIndex((todo) => todo._id === id);
+    if (todoIndex === -1) {
+      console.warn(`Todo with id ${id} not found for update`);
+      return;
+    }
+    const updatedTodo = { ...currentTodos[todoIndex], ...updates };
+    const updatedTodos = [...currentTodos];
+    updatedTodos[todoIndex] = updatedTodo;
+    this.todosSubject.next(updatedTodos);
+
     this.http
       .put<any>(`${this.API_URL}/${id}`, updates)
       .pipe(catchError(this.handleError))
       .subscribe({
-        next: (response: any) => {
-          console.log('Updated todo:', response.data);
-
-          // Use local state instead of API call
-          const currentTodos = this.todosSubject.value;
-          const index = currentTodos.findIndex((todo) => todo._id === id);
-          if (index !== -1) {
-            const updatedTodos = [...currentTodos];
-            updatedTodos[index] = response.data;
-            this.todosSubject.next(updatedTodos);
-          }
+        next: () => {
+          console.log('Updated todo:', updatedTodo);
         },
         error: (error) => {
           console.error('Error updating todo:', error);
+          // I'm reverting optimistic update if there's an error
+          this.todosSubject.next(currentTodos);
         },
       });
   }
 
   deleteTodo(id: string) {
+    //TODO: Let's do the optimistic update first, then make the API call.
+    //FIXME: IT WORKS!! Common pattern to reuse.
+    const currentTodos = this.todosSubject.value;
+    const updatedTodos = currentTodos.filter((todo) => todo._id !== id);
+    this.todosSubject.next(updatedTodos);
+
     this.http
       .delete(`${this.API_URL}/${id}`)
       .pipe(catchError(this.handleError))
       .subscribe({
         next: () => {
           console.log(`Todo with id ${id} deleted`);
-
-          // Use local state instead of API call
-          const currentTodos = this.todosSubject.value;
-          const filteredTodos = currentTodos.filter((todo) => todo._id !== id);
-          this.todosSubject.next(filteredTodos);
         },
         error: (error) => {
           console.error('Error deleting todo:', error);
+          // Revert optimistic update on error
+          this.todosSubject.next(currentTodos);
         },
       });
   }
@@ -118,12 +126,25 @@ export class TodoService {
 
     if (todo) {
       // Update UI immediately (optimistic)
-      const updatedTodos = currentTodos.map((t) =>
-        t._id === id ? { ...t, completed: !t.completed } : t
+      const updatedTodos = currentTodos.map((todo) =>
+        todo._id === id ? { ...todo, completed: !todo.completed } : todo
       );
       this.todosSubject.next(updatedTodos);
-
-      this.updateTodo(id, { completed: !todo.completed });
+      this.http
+        .put<any>(`${this.API_URL}/${id}`, { completed: !todo.completed })
+        .subscribe({
+          next: () => {
+            console.log(`Todo with id ${id} toggled complete`);
+          },
+          error: (error: HttpErrorResponse) => {
+            console.error('Error toggling todo complete:', error);
+            // I'm reverting optimistic update if there's an error
+            const revertedTodos = currentTodos.map((todo) =>
+              todo._id === id ? { ...todo, completed: !todo.completed } : todo
+            );
+            this.todosSubject.next(revertedTodos);
+          },
+        });
     }
   }
 
