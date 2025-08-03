@@ -16,20 +16,30 @@ export class TodoInput {
 
   constructor(private todoService: TodoService) {}
   addTodo(): void {
+    // const tempId = Math.floor(Math.random() * 10000);
+    // const optimisticTodo: Todo = {
+    //   _id: tempId,
+    //   text: this.newTodoText.trim(),
+    //   completed: false,
+    //   createdAt: new Date(),
+    // };
+
     if (this.newTodoText.trim()) {
-      const newTodo: Todo = {
-        id: this.todoService.generateId(),
+      const optimisticTodo: Todo = {
+        _id: Date.now().toString(),
         text: this.newTodoText.trim(),
         completed: false,
         createdAt: new Date(),
       };
-      console.log(newTodo);
-      this.todoService.addTodo(newTodo);
+      this.todoService.addOptimisticTodo(optimisticTodo);
+      const todoText = this.newTodoText.trim();
       this.newTodoText = '';
+      this.todoService.addTodoToBackend(todoText, optimisticTodo._id);
+      console.log('Todo added:', optimisticTodo);
     }
   }
-  onSortChange(event: any): void {
-    const sortType = event.target.value;
+  onSortChange(event: Event): void {
+    const sortType = (event?.target as HTMLSelectElement).value;
     this.todoService.sortTodos(sortType);
     console.log('Current sort:', this.selectedSort);
     console.log('Sort type selected:', sortType);

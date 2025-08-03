@@ -18,19 +18,26 @@ export class TodoList {
   isEditModalOpen: boolean = false;
   selectedTodoToBeEdited: string = '';
   currentEditingTodo: Todo | null = null;
+  isTodoLoading: boolean = false; // to track loading state
 
   constructor(private todoService: TodoService) {} //i am injecting the todo service here.
 
   ngOnInit() {
+    console.log('TodoList component initialized');
     this.todosSubscription.add(
-      this.todoService.todos$.subscribe((todos) => {
-        this.todos = todos;
+      this.todoService.todos$.subscribe({
+        next: (todos) => {
+          this.todos = todos; //updates when service changes, learnt this the hard way: listen to the service's observable instead of making another API call and fetching data again. This supports the real-time updates(optimistic update I did in the service and input ts)
+          console.log('Todos updated:', this.todos);
+        },
+        error: (error) => {
+          console.error('Error fetching todos:', error);
+        },
       })
     );
-
-    this.todoService.emitTodos();
   }
-  toggleComplete(id: number) {
+
+  toggleComplete(id: string) {
     this.todoService.toggleComplete(id);
   }
 
@@ -42,14 +49,15 @@ export class TodoList {
 
   saveEdit(): void {
     if (this.selectedTodoToBeEdited.trim() && this.currentEditingTodo) {
-      this.todoService.updateTodo(this.currentEditingTodo.id, {
+      this.todoService.updateTodo(this.currentEditingTodo._id, {
         text: this.selectedTodoToBeEdited.trim(),
       });
     }
     this.isEditModalOpen = false;
   }
 
-  deleteTodo(id: number) {
+  deleteTodo(id: string) {
+    console.log('Deleting todo with id:', id);
     this.todoService.deleteTodo(id);
   }
 
