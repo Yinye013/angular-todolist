@@ -35,13 +35,10 @@ export class TodoInput {
       const todoText = this.newTodoText.trim();
       this.newTodoText = '';
       this.todoService.addTodoToBackend(todoText, optimisticTodo._id);
-      console.log('Todo added:', optimisticTodo);
     }
   }
   onSortChange(event: Event): void {
     const sortType = (event?.target as HTMLSelectElement).value;
     this.todoService.sortTodos(sortType);
-    console.log('Current sort:', this.selectedSort);
-    console.log('Sort type selected:', sortType);
   }
 }

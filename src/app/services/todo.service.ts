@@ -11,22 +11,27 @@ export class TodoService {
   private readonly API_URL = `${environment.apiUrl}/api/v1/todos`;
   private todosSubject = new BehaviorSubject<Todo[]>([]);
   public todos$: Observable<Todo[]> = this.todosSubject.asObservable();
+  private loadingSubject = new BehaviorSubject<boolean>(true);
+  public loading$: Observable<boolean> = this.loadingSubject.asObservable();
 
   constructor(private http: HttpClient) {
     this.loadTodos();
   }
 
   private loadTodos(): void {
+    this.loadingSubject.next(true);
+
     this.http
       .get<any>(this.API_URL)
       .pipe(catchError(this.handleError))
       .subscribe({
         next: (response: any) => {
           this.todosSubject.next(response.data);
-          console.log('Todos loaded:', response.data);
+          this.loadingSubject.next(false);
         },
         error: (error) => {
           console.error('Error loading todos:', error);
+          this.loadingSubject.next(false);
         },
       });
   }
@@ -52,7 +57,6 @@ export class TodoService {
       .pipe(catchError(this.handleError))
       .subscribe({
         next: (response: any) => {
-          console.log('Real todo from backend:', response.data);
           const currentTodos = this.todosSubject.value;
           const updatedTodos = currentTodos.map((todo) =>
             todo._id === tempId ? response.data : todo
@@ -88,7 +92,7 @@ export class TodoService {
       .pipe(catchError(this.handleError))
       .subscribe({
         next: () => {
-          console.log('Updated todo:', updatedTodo);
+          console.log(`Todo with id ${id} updated successfully`);
         },
         error: (error) => {
           console.error('Error updating todo:', error);

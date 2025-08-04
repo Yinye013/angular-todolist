@@ -1,5 +1,9 @@
 <div class="todo-list-container">
-  <ul>
+  <div class="loader" *ngIf="isTodoLoading">
+    <span>Loading...</span>
+  </div>
+
+  <ul *ngIf="!isTodoLoading">
     <li *ngFor="let todo of todos" [class.completed]="todo.completed">
       <span>{{ todo.text }}</span>
       <div>
@@ -54,6 +58,10 @@
     </li>
   </ul>
 
+  <div *ngIf="!isTodoLoading && todos.length === 0" class="no-todo">
+    No todos found. Add a todo!
+  </div>
+
   <div class="modal-overlay" *ngIf="isEditModalOpen" (click)="closeModal()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <h2>Edit Todo</h2>
@@ -73,10 +81,5 @@
         </div>
       </form>
     </div>
-  </div>
-
-  <!-- Loader -->
-  <div class="loader" *ngIf="isTodoLoading">
-    <span>Loading...</span>
   </div>
 </div>
